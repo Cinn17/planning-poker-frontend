@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
-const socket = io("https://YOUR-BACKEND-URL.repl.co"); // replace with real backend URL
+const socket = io("https://YOUR-BACKEND-URL.repl.co"); // replace this
 
 function App() {
   const [name, setName] = useState("");
@@ -12,7 +12,15 @@ function App() {
   const [votes, setVotes] = useState({});
   const [votesRevealed, setVotesRevealed] = useState(false);
 
-  const cards = ["1", "2", "3", "5", "8", "13", "?"];
+  const cards = [
+    { value: "1", color: "bg-pink-200" },
+    { value: "2", color: "bg-yellow-200" },
+    { value: "3", color: "bg-green-200" },
+    { value: "5", color: "bg-blue-200" },
+    { value: "8", color: "bg-purple-200" },
+    { value: "13", color: "bg-orange-200" },
+    { value: "?", color: "bg-sky-200" },
+  ];
 
   useEffect(() => {
     socket.on("usersUpdate", setUsers);
@@ -38,75 +46,74 @@ function App() {
   };
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-pink-100 p-4 flex flex-col items-center justify-start">
-        <h1 className="text-4xl font-bold text-indigo-700 mb-6 mt-4">🃏 Planning Poker</h1>
-
+      <div className="min-h-screen bg-gradient-to-br from-rose-100 to-indigo-100 flex items-center justify-center p-6">
         {!joined ? (
-            <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md space-y-4">
+            <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-5 text-center">
+              <h1 className="text-3xl font-bold text-indigo-600">Planning Poker</h1>
               <input
                   type="text"
                   placeholder="Your name"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
                   onChange={(e) => setName(e.target.value)}
               />
               <input
                   type="text"
                   placeholder="Room ID"
                   defaultValue="main"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
                   onChange={(e) => setRoom(e.target.value)}
               />
               <button
                   onClick={joinRoom}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white p-3 rounded-lg font-semibold shadow"
+                  className="w-full bg-indigo-500 text-white py-3 rounded-lg hover:bg-indigo-600 font-semibold"
               >
                 Join Room
               </button>
             </div>
         ) : (
-            <div className="w-full max-w-5xl">
-              <h2 className="text-2xl text-indigo-800 font-semibold mb-4 text-center">Room: {room}</h2>
+            <div className="flex flex-col items-center justify-center w-full max-w-4xl space-y-6">
+              <h2 className="text-2xl text-indigo-700 font-semibold">Room: {room}</h2>
+
+              <div className="flex flex-wrap justify-center gap-6 mb-4">
+                {cards.map(({ value, color }) => (
+                    <button
+                        key={value}
+                        onClick={() => sendVote(value)}
+                        className={`w-24 h-32 text-3xl font-bold rounded-2xl ${color} hover:brightness-110 transition shadow-md ${
+                            vote === value ? "ring-4 ring-indigo-400 scale-105" : ""
+                        }`}
+                    >
+                      {value}
+                    </button>
+                ))}
+              </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
                 {users.map((user, idx) => (
-                    <div key={idx} className="bg-white rounded-xl shadow p-4 text-center">
-                      <p className="font-medium text-indigo-700">{user}</p>
-                      {votesRevealed && votes && (
-                          <p className="text-2xl font-bold mt-2 text-gray-800">{votes[user] || "—"}</p>
+                    <div
+                        key={idx}
+                        className="bg-white p-4 rounded-xl shadow text-center w-full"
+                    >
+                      <p className="font-semibold text-indigo-700">{user}</p>
+                      {votesRevealed && (
+                          <p className="text-xl mt-2">{votes[user] || "—"}</p>
                       )}
                     </div>
                 ))}
               </div>
 
-              <div className="flex flex-wrap justify-center gap-4 mb-6">
-                {cards.map((val) => (
-                    <button
-                        key={val}
-                        onClick={() => sendVote(val)}
-                        className={`w-16 h-16 text-xl font-bold rounded-full transition-all duration-200 shadow-lg hover:scale-105
-                  ${
-                            vote === val
-                                ? "bg-green-500 text-white"
-                                : "bg-white text-gray-800 border-2 border-indigo-300"
-                        }`}
-                    >
-                      {val}
-                    </button>
-                ))}
-              </div>
-
-              <div className="flex justify-center gap-4">
-                <button
-                    onClick={() => socket.emit("resetVotes", room)}
-                    className="bg-red-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-red-600 transition"
-                >
-                  Reset Votes
-                </button>
+              <div className="flex gap-4">
                 <button
                     onClick={() => socket.emit("reveal", room)}
-                    className="bg-indigo-500 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-600 transition"
+                    className="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 transition font-semibold"
                 >
                   Reveal Votes
+                </button>
+                <button
+                    onClick={() => socket.emit("resetVotes", room)}
+                    className="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition font-semibold"
+                >
+                  Reset
                 </button>
               </div>
             </div>
